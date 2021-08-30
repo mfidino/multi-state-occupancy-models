@@ -65,3 +65,6 @@ for(site in 1:nrow(y)){
 return(y)
 }
 
+grab <- function(x,y){
+  x[,grep(y, colnames(x))]
+}
