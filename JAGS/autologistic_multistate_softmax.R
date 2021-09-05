@@ -37,7 +37,7 @@ model{
     #  previous time step.
     for(year in 2:nyear){
       z[site,year] ~ dcat(
-        psi[site,z[year-1],] / sum(psi[site,z[year-1],])
+        psi[site,z[site,year-1],] / sum(psi[site,z[site,year-1],])
       )
     }
   }

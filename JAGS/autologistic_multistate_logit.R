@@ -28,7 +28,7 @@ model{
     # Probability of either state 2 or 3
     #  given state at year-1 != 1
     logit(omega_cond[site]) <- inprod(
-      beta23, x[site]
+      beta23, x[site,]
     ) + theta23
     # Probability of state 3 given 2
     #  given state at year-1 != 1 (or first year).
@@ -42,8 +42,8 @@ model{
     psi[site,1,3] <- omega[site] * delta[site]
     # latent state probabilities given state == 2
     psi[site,2,1] <- 1 - omega_cond[site]
-    psi[site,2,2] <- omega_cond[site] * (1-delta_cond[site])
-    psi[site,2,3] <- omega_cond[site] * delta_cond[site]
+    psi[site,2,2] <- omega_cond[site] * (1-delta[site])
+    psi[site,2,3] <- omega_cond[site] * delta[site]
     # latent state probabilities given state == 3
     psi[site,3,1] <- 1 - omega_cond[site]
     psi[site,3,2] <- omega_cond[site] * (1-delta_cond[site])
@@ -59,7 +59,7 @@ model{
     #  previous time step.
     for(year in 2:nyear){
       z[site,year] ~ dcat(
-        psi[site,z[year-1],]
+        psi[site,z[site,year-1],]
       )
     }
   }
@@ -85,7 +85,7 @@ model{
       )
       # Probability of detecting state 3 given 2
       logit(eta3[site,survey]) <- inprod(
-        rho3, k[site,survey]
+        rho3, k[site,survey,]
       )
       # Fill in detection probability matrix
       # First row: TS = 1
@@ -104,7 +104,7 @@ model{
         # Index the appropriate row of eta based on the current latent state.
         # Again, we are assuming there is no variation among years or sampling.
         y[site,survey,yr] ~ dcat(
-          eta[site,survey,z[yr],]
+          eta[site,survey,z[site,yr],]
         )
       }
     }
@@ -113,11 +113,11 @@ model{
   # Priors
   #
   # Pr(latent state 2)
-  for(b2 in 1:nbeta2){
-    beta2[b2] ~ dlogis(0,1)
+  for(b2 in 1:nbeta23){
+    beta23[b2] ~ dlogis(0,1)
   }
   # Pr(latent state 3)
-  for(b3 in 1:nbeta2){
+  for(b3 in 1:nbeta3){
     beta3[b3] ~ dlogis(0,1)
   }
   # Autologistic terms
