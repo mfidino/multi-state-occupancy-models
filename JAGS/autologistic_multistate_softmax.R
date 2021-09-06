@@ -69,7 +69,7 @@ model{
         # Index the appropriate row of eta based on the current latent state.
         # Again, we are assuming there is no variation among years or sampling.
         y[site,survey,yr] ~ dcat(
-          eta[site,survey,z[yr],] / sum(eta[site,survey,z[yr],])
+          eta[site,survey,z[site,yr],] / sum(eta[site,survey,z[site,yr],])
         )
       }
     }
@@ -82,7 +82,7 @@ model{
     beta2[b2] ~ dlogis(0,1)
   }
   # Pr(latent state 3)
-  for(b3 in 1:nbeta2){
+  for(b3 in 1:nbeta3){
     beta3[b3] ~ dlogis(0,1)
   }
   # Autologistic terms
@@ -90,12 +90,13 @@ model{
   theta3g2 ~ dlogis(0,1)
   theta2g3 ~ dlogis(0,1)
   theta3g3 ~ dlogis(0,1)
-  # Pr(OS = 2 | TS = 2 or 3)
+  # Pr(OS = 2 | TS = 2)
   for(ts2 in 1:nts2){
-    rho2g3[ts2] ~ dlogis(0,1)
+    rho2g2[ts2] ~ dlogis(0,1)
   }
-  # Pr(OS = 3 | TS = 3) 
+  # Pr(OS = 2 | TS = 3) & Pr(OS = 3 | TS = 3) 
   for(ts3 in 1:nts3){
+    rho2g3[ts3] ~ dlogis(0,1)
     rho3g3[ts3] ~ dlogis(0,1)
   } 
 }

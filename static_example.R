@@ -4,6 +4,7 @@ library(runjags)
 library(mcmcplots)
 library(scales)
 
+
 # Load all the functions we need to simulate the data
 sapply(
   list.files("./R/functions", full.names = TRUE),
