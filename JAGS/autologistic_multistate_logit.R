@@ -6,22 +6,14 @@ model{
     # Set up the logit linear predictors
     #   Note: I am assuming here that while the model is dynamic,
     #   the probabilities do not vary by year (because the logit
-    #   linear predictors do not vary through time). If you want
-    #   to add this then all of the logit linear predictors need
-    #   to be indexed by site AND year. For example, you would
-    #   set omega to logit(omega[site,1]) <- {INSERT LINEAR PREDICTOR}
-    #   here and then when the year in 2:nyear loop starts you
-    #   would add in logit(omega[site,year]) <- {INSERT LINEAR 
-    #   PREDICTOR}. The transition matrix would also need to 
-    #   be indexed by year to account for this added complexity!
+    #   linear predictors do not vary through time).
     # LATENT STATE LINEAR PREDICTORS.
     # Probability of either state 2 or 3
     #  given state at year-1 == 1 (or first year).
     logit(omega[site]) <- inprod(
       beta23, x[site,]
     )
-    # Probability of state 3 given 2
-    #  given state at year-1 == 1 (or first year).
+    # Conditional probability of state 3
     logit(delta[site]) <- inprod(
       beta3, u[site,]
     )
@@ -30,8 +22,8 @@ model{
     logit(omega_cond[site]) <- inprod(
       beta23, x[site,]
     ) + theta23
-    # Probability of state 3 given 2
-    #  given state at year-1 != 1 (or first year).
+    # Conditional probability of state 3 
+    #  given state at year-1 = 3.
     logit(delta_cond[site]) <- inprod(
       beta3, u[site,]
     ) + theta3
@@ -71,14 +63,7 @@ model{
       # Set up the logit linear predictors
       #   Note: I am assuming here that while the model is dynamic,
       #   The probabilities do not vary by year (because the logit
-      #   linear predictors do not vary through time). If you want
-      #   to add this then all of the logit linear predictors need
-      #   to be indexed by site AND year. For example, you would
-      #   set omega to logit(omega[site,1]) <- {INSERT LINEAR PREDICTOR}
-      #   here and then when the year in 2:nyear loop starts you
-      #   would add in logit(omega[site,year]) <- {INSERT LINEAR 
-      #   PREDICTOR}. The transition matrix would also need to 
-      #   be indexed by year to account for this added complexity!
+      #   linear predictors do not vary through time).
       # Probability of detecting either state 2 or 3
       logit(eta23[site,survey]) <- inprod(
         rho23, k[site,survey,]
@@ -112,7 +97,7 @@ model{
   #
   # Priors
   #
-  # Pr(latent state 2)
+  # Pr(latent state 2 or 3)
   for(b2 in 1:nbeta23){
     beta23[b2] ~ dlogis(0,1)
   }
@@ -123,7 +108,7 @@ model{
   # Autologistic terms
   theta23 ~ dlogis(0,1)
   theta3 ~ dlogis(0,1)
-  # Pr(OS = 2 | TS = 2 or 3)
+  # Pr(OS = 2 or 3 | TS = 2 or 3)
   for(ts2 in 1:nts2){
     rho23[ts2] ~ dlogis(0,1)
   }

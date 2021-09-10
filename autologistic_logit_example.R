@@ -8,7 +8,6 @@
 
 library(runjags)
 library(mcmcplots)
-library(scales)
 library(markovchain)
 
 # Load all the functions we need to simulate the data
@@ -17,14 +16,13 @@ sapply(
   source, verbose = FALSE
 )
 
-
-
 # General bookkeeping
 nsite <- 75
 nsurvey <- 8
 nyear <- 4
 set.seed(22025)
 
+# The true parameter values
 my_params <- list(
   beta23 = c(0.5,0.5),
   beta3 = c(0,1),
@@ -50,6 +48,7 @@ k <- array(1, dim = c(nsite, nsurvey,2))
 #  the values across the second dimension of k.
 k[,,2] <- rnorm(nsite * nsurvey)
 
+# my covariates
 my_covs <- list(
  beta23 = x,
  beta3 = u,
@@ -57,7 +56,14 @@ my_covs <- list(
  rho3 = k
 )
 
-y <- simulate_autologistic(my_params, my_covs, "logit")
+# Function to simulate autologistic data from logit-link model
+# can be found in "./R/functions/simulate.R"
+model
+y <- simulate_autologistic(
+  params = my_params,
+  covs = my_covs,
+  link = "logit"
+)
 
 # make the data list for modeling
 data_list <- list(
@@ -88,17 +94,25 @@ m1 <- run.jags(
   method = "parallel"
 )
 
+# summarise model
 msum <- summary(m1)
 round(msum,2)[,1:3]
 
+# Save model output for later
 saveRDS(m1, "autologistic_logit_mcmc.rds")
 
+
+# Get median estimates from mcmc
 med_ests <- apply(
   do.call("rbind", m1$mcmc),
   2,
   median
 )
+
+# order parameters alphabetically
 med_ests <- med_ests[order(names(med_ests))]
+
+# get parameter names
 pnames <- names(med_ests)
 
 # Compare mcmc output to truth
