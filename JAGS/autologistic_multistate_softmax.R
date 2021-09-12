@@ -6,13 +6,7 @@ model{
     # LATENT STATE LINEAR PREDICTORS.
     #   Note: I am assuming here that while the model is dynamic,
     #   The probabilities do not vary by year (because the
-    #   linear predictors do not vary through time). If you want
-    #   to add this then all of the linear predictors need
-    #   to be indexed by site AND year (e.g., copy all the psi stuff
-    #   and add it into the year loop as well, indexing psi by year
-    #   (e.g., psi[site,year,1:3,1:3]). Directly below you'd add 
-    #   a fourth dimension to psi as well, but index it as 1 for
-    #   first year (i.e., psi[site,1,1:3,1:3]).
+    #   linear predictors do not vary through time).
     # 
     # latent state probabilities given state == 1
     psi[site,1,1] <- 1
@@ -49,9 +43,7 @@ model{
       # Set up the logit linear predictors
       #   Note: I am assuming here that while the model is dynamic,
       #   The probabilities do not vary by year (because the
-      #   linear predictors do not vary through time). If you want
-      #   to add this then all of the linear predictors need
-      #   to be indexed by site AND year.
+      #   linear predictors do not vary through time).
       # Fill in detection probability matrix
       # First row: TS = 1
       eta[site,survey,1,1] <- 1 # -------------------------------------- OS = 1

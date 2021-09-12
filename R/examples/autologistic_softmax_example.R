@@ -2,7 +2,6 @@
 
 library(runjags)
 library(mcmcplots)
-library(scales)
 library(markovchain)
 
 # Note: I parameterized this model complex than the aulogistic model
@@ -28,15 +27,27 @@ nsurvey <- 8
 nyear <- 6
 set.seed(188)
 
+# OS = observed state
+# TS = true state
+
 my_params <- list(
+  # latent state 2 parameters
   beta2 = c(-0.5,0.5),
+  # latent state 3 parameters
   beta3 = c(-1,2),
+  # detection, OS=2|TS=2
   rho2g2 = c(0.5,1),
+  # detection, OS=2|TS=3
   rho2g3 = c(0.75,0),
+  # detection, OS=3|TS=3
   rho3g3 = c(1,-0.5),
+  # autologistic, 2 given 2 at t-1
   theta2g2 = 0.75,
+  # autologistic, 3 given 2 at t-1
   theta3g2 = 2,
+  # autologistic, 2 given 3 at t-1
   theta2g3 = -0.5,
+  # autologistic, 3 given 3 at t-1
   theta3g3 = 0.5,
   nyear = nyear
 )
@@ -56,6 +67,7 @@ k <- array(1, dim = c(nsite, nsurvey,2))
 #  the values across the second dimension of k.
 k[,,2] <- rnorm(nsite * nsurvey)
 
+# Make a list for covariates
 my_covs <- list(
   beta2 = x,
   beta3 = u,
@@ -64,19 +76,29 @@ my_covs <- list(
   rho3g3 = k
 )
 
-y <- simulate_autologistic(my_params, my_covs, "softmax")
+# simulate data
+y <- simulate_autologistic(
+  params = my_params,
+  covs = my_covs,
+  link = "softmax"
+)
 
 transitions(y)
 
 # make the data list for modeling
 data_list <- list(
+  # observed data
   y = y,
+  # design matrices
   x = x,
   u = u,
   k = k,
+  # for looping
   nsite = nsite,
   nsurvey = nsurvey,
   nyear = nyear,
+  # number of parameters for different
+  #  linear predictors
   nbeta2 = length(my_params$beta2),
   nbeta3 = length(my_params$beta3),
   nts2 = length(my_params$rho2g2),
@@ -99,8 +121,10 @@ m1 <- run.jags(
   method = "parallel"
 )
 
+# summarise model
 msum <- summary(m1)
-round(msum,2)[,1:3]
+
+# save output for later
 saveRDS(m1, "autologistic_softmax_mcmc.rds")
 
 
