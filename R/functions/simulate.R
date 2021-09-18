@@ -245,3 +245,95 @@ transitions <- function(y){
   }
   return(table(ans))
 }
+
+simulate_dynamic <- function(params, covs){
+  if(!is.list(params)){
+    stop("params must be a list")
+  }
+  if(!is.list(covs)){
+    stop("covs must be a list")
+  }
+  # latent state model
+  psi23 <- plogis(covs$psi23 %*% params$psi23)
+  psi3 <- plogis(covs$psi3 %*% params$psi3)
+  gamma <- plogis(covs$gamma %*% params$gamma)
+  lambda <- plogis(covs$lambda %*% params$lambda)
+  phi23 <- plogis(covs$phi23 %*% params$phi23)
+  phi3 <- plogis(covs$phi3 %*% params$phi3)
+  
+  # for first season
+  s1_psi <- matrix(NA, nrow = nrow(covs$psi23), ncol = 3)
+  s1_psi[,1] <- (1 - psi23)
+  s1_psi[,2] <- psi_23 * (1 - psi3)
+  s1_psi[,3] <- psi_23 * psi3
+  
+  
+  # for rest of the seasons
+  psi <- array(NA, dim = c(nrow(covs$psi), 3, 3))
+  
+  
+  # previous state == 1
+  psi[,1,1] <- (1 - gamma)
+  psi[,1,2] <- gamma * (1 - lambda)
+  psi[,1,3] <- gamma * lambda
+  # previous state == 2
+  psi[,2,1] <- (1 - phi23)
+  psi[,2,2] <- phi23 * (1 - lambda)
+  psi[,2,3] <- phi23 * lambda
+  # previous state == 3
+  psi[,3,1] <- (1 - phi23)
+  psi[,3,2] <- phi23 * (1 - phi3)
+  psi[,3,3] <- phi23 * phi3
+  # convert to probability
+  # simulate latent state
+  z <- matrix(NA, ncol = params$nyear, nrow = nrow(covs$psi23))
+  z[,1] <- apply(
+    s1_psi,
+    1,
+    function(x) sample(1:3, 1, prob = x)
+  )
+  for(year in 2:params$nyear){
+    # grab the correct probabilities based on previous state
+    for(site in 1:nrow(covs$psi23)){
+      z[site,year] <- sample(
+        1:3, 1, prob = psi[site,z[site,year-1],]
+      )
+    }
+  }
+  # data model
+  eta <- array(0, dim = c(nrow(covs$psi23), dim(covs$rho23)[2],3,3))
+  # TS = 1
+  eta[,,1,1] <- 1  # OS = 1
+  eta[,,1,2] <- 0  # OS = 2
+  eta[,,1,3] <- 0  # OS = 3
+  # TS = 2
+  for(i in 1:dim(eta)[2]){
+    eta[,i,2,1] <- 1 - plogis(covs$rho23[,i,] %*% params$rho23)
+    eta[,i,2,2] <- plogis(covs$rho23[,i,] %*% params$rho23)
+  }
+  eta[,,2,3] <- 0 # OS = 3
+  # TS = 3
+  eta[,,3,1] <- 1 # OS = 1
+  for(i in 1:dim(eta)[2]){
+    eta[,i,3,1] <- 1 - plogis(covs$rho23[,i,] %*% params$rho23)
+    eta[,i,3,2] <- plogis(covs$rho23[,i,] %*% params$rho23) * 
+      (1 - plogis(covs$rho3[,i,] %*% params$rho3))
+    eta[,i,3,3] <- plogis(covs$rho23[,i,] %*% params$rho23) * 
+      plogis(covs$rho3[,i,] %*% params$rho3)
+  }
+  # sample y.
+  y <- array(
+    NA,
+    dim = c(dim(eta)[1], dim(eta)[2], params$nyear)
+  )
+  for(site in 1:dim(y)[1]){
+    for(survey in 1:dim(y)[2]){
+      for(year in 1:dim(y)[3]){
+        y[site,survey,year] <- sample(
+          1:3,
+          1, prob = eta[site,survey,z[site,year],])
+      }
+    }
+  }
+  return(y)
+}
