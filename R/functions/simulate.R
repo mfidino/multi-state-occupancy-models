@@ -254,22 +254,22 @@ simulate_dynamic <- function(params, covs){
     stop("covs must be a list")
   }
   # latent state model
-  psi23 <- plogis(covs$psi23 %*% params$psi23)
-  psi3 <- plogis(covs$psi3 %*% params$psi3)
-  gamma <- plogis(covs$gamma %*% params$gamma)
-  lambda <- plogis(covs$lambda %*% params$lambda)
-  phi23 <- plogis(covs$phi23 %*% params$phi23)
-  phi3 <- plogis(covs$phi3 %*% params$phi3)
+  psi23 <- plogis(covs$a23 %*% params$a23)
+  psi3 <- plogis(covs$a3 %*% params$a3)
+  gamma <- plogis(covs$b23 %*% params$b23)
+  lambda <- plogis(covs$b3 %*% params$b3)
+  phi23 <- plogis(covs$d23 %*% params$d23)
+  phi3 <- plogis(covs$d3 %*% params$d3)
   
   # for first season
-  s1_psi <- matrix(NA, nrow = nrow(covs$psi23), ncol = 3)
+  s1_psi <- matrix(NA, nrow = nrow(covs$a23), ncol = 3)
   s1_psi[,1] <- (1 - psi23)
-  s1_psi[,2] <- psi_23 * (1 - psi3)
-  s1_psi[,3] <- psi_23 * psi3
+  s1_psi[,2] <- psi23 * (1 - psi3)
+  s1_psi[,3] <- psi23 * psi3
   
   
   # for rest of the seasons
-  psi <- array(NA, dim = c(nrow(covs$psi), 3, 3))
+  psi <- array(NA, dim = c(nrow(covs$a23), 3, 3))
   
   
   # previous state == 1
@@ -286,7 +286,7 @@ simulate_dynamic <- function(params, covs){
   psi[,3,3] <- phi23 * phi3
   # convert to probability
   # simulate latent state
-  z <- matrix(NA, ncol = params$nyear, nrow = nrow(covs$psi23))
+  z <- matrix(NA, ncol = params$nyear, nrow = nrow(covs$a23))
   z[,1] <- apply(
     s1_psi,
     1,
@@ -294,14 +294,14 @@ simulate_dynamic <- function(params, covs){
   )
   for(year in 2:params$nyear){
     # grab the correct probabilities based on previous state
-    for(site in 1:nrow(covs$psi23)){
+    for(site in 1:nrow(covs$a23)){
       z[site,year] <- sample(
         1:3, 1, prob = psi[site,z[site,year-1],]
       )
     }
   }
   # data model
-  eta <- array(0, dim = c(nrow(covs$psi23), dim(covs$rho23)[2],3,3))
+  eta <- array(0, dim = c(nrow(covs$a23), dim(covs$rho23)[2],3,3))
   # TS = 1
   eta[,,1,1] <- 1  # OS = 1
   eta[,,1,2] <- 0  # OS = 2

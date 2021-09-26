@@ -121,7 +121,7 @@ model{
   }
   # Pr(latent state 3)
   for(ib3 in 1:nb3){
-    b3[b3] ~ dlogis(0,1)
+    b3[ib3] ~ dlogis(0,1)
   }
   # persistence
   for(id23 in 1:nd23){
